@@ -2,11 +2,7 @@ pipeline {
     agent any
 
     stages {
-        stage('Checkout Code') {
-            steps {
-                echo 'Using local workspace, skipping Git checkout.'
-            }
-        }
+        
 
         stage('Build Docker Image') {
             steps {
