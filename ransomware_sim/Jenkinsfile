@@ -2,38 +2,40 @@ pipeline {
     agent any
 
     stages {
-
         stage('Build Docker Image') {
             steps {
+                echo "Building Docker image: ransomware-sim"
                 sh 'docker build -t ransomware-sim .'
             }
         }
 
         stage('Run Simulation Container') {
             steps {
+                echo "Running container: ransomware-test"
                 sh 'docker run -d --rm --name ransomware-test ransomware-sim'
             }
         }
 
         stage('Verify Encryption') {
             steps {
-                sh 'docker exec ransomware-test cat target_files/sample1.txt || true'
+                echo "Verifying encryption on target file..."
+                sh 'docker exec ransomware-test cat target_files/sample1.txt || echo "File encrypted or missing!"'
             }
         }
 
         stage('Stop Container') {
             steps {
+                echo "Stopping simulation container..."
                 sh 'docker stop ransomware-test || true'
             }
         }
     }
 
-
-post {
-    always {
-        sh 'docker stop ransomware-test || true'
+    post {
+        always {
+            echo "Pipeline finished. Cleaning up..."
+            // Ensure container is stopped if it's still running.
+            sh 'docker stop ransomware-test || true'
+        }
     }
-}
-
-
 }
