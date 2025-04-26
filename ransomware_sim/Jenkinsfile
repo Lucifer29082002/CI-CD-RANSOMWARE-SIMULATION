@@ -1,0 +1,35 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout Code') {
+            steps {
+                echo 'Using local workspace, skipping Git checkout.'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t ransomware-sim .'
+            }
+        }
+
+        stage('Run Simulation Container') {
+            steps {
+                sh 'docker run -d --rm --name ransomware-test ransomware-sim'
+            }
+        }
+
+        stage('Verify Encryption') {
+            steps {
+                sh 'docker exec ransomware-test cat target_files/sample1.txt || true'
+            }
+        }
+
+        stage('Stop Container') {
+            steps {
+                sh 'docker stop ransomware-test || true'
+            }
+        }
+    }
+}
