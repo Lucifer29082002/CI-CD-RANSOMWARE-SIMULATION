@@ -22,7 +22,7 @@ pipeline {
 
         stage('Verify Encryption') {
             steps {
-                sh 'docker exec ransomware-test cat target_files/sample1.txt || true'
+                sh 'docker exec -it ransomware-test bash -c "cat target_files/sample1.txt || true"'
             }
         }
 
