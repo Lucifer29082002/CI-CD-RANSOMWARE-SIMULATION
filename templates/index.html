@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ransomware Simulation - Educational Demo</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #212529;
+            color: #f8f9fa;
+        }
+
+        .content-box {
+            background-color: #343a40;
+            border-radius: 5px;
+            padding: 15px;
+            min-height: 200px;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+            word-break: break-all;
+        }
+
+        .terminal {
+            background-color: #000;
+            color: #00ff00;
+            font-family: monospace;
+            padding: 10px;
+            border-radius: 5px;
+            height: 250px;
+            overflow-y: scroll;
+        }
+
+        .blinking {
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0;
+            }
+        }
+
+        .key-box {
+            background-color: #dc3545;
+            color: white;
+            font-family: monospace;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .title-box {
+            background-color: #dc3545;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 5px;
+        }
+
+        .warning {
+            color: #ffc107;
+        }
+
+        .success {
+            color: #28a745;
+        }
+
+        .error {
+            color: #dc3545;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container py-4">
+        <div class="title-box text-center">
+            <h1 class="display-4">⚠️ Ransomware Simulation ⚠️</h1>
+            <p class="lead">Educational Demonstration for DevOps CI/CD Pipeline Project</p>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card bg-dark text-white mb-4">
+                    <div class="card-header">
+                        <h5>Upload File</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="uploadForm" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <label for="fileUpload" class="form-label">Select a text file to
+                                    encrypt/decrypt:</label>
+                                <input class="form-control" type="file" id="fileUpload" accept=".txt,.md,.csv,.json">
+                            </div>
+                            <button type="submit" class="btn btn-primary" id="uploadBtn">Upload</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card bg-dark text-white">
+                    <div class="card-header">
+                        <h5>Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <button id="encryptBtn" class="btn btn-danger mb-2 w-100" disabled>Encrypt File</button>
+                        <button id="decryptBtn" class="btn btn-success w-100" disabled>Decrypt File</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card bg-dark text-white">
+                    <div class="card-header">
+                        <h5>Terminal Output</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="terminal" id="terminal">
+                            <div>> Ransomware Simulation v1.0 initiated...</div>
+                            <div>> Ready for file operations <span class="blinking">_</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card bg-dark text-white">
+                    <div class="card-header">
+                        <h5>Original Content</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="content-box" id="originalContent">
+                            No file uploaded yet
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card bg-dark text-white">
+                    <div class="card-header">
+                        <h5>Encrypted/Decrypted Content</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="content-box" id="processedContent">
+                            No file processed yet
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card bg-dark text-white">
+                    <div class="card-header">
+                        <h5>Encryption Key</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="key-box" id="keyContent">
+                            No key generated yet
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="alert alert-warning">
+                    <h4>Educational Purpose Only</h4>
+                    <p>This application simulates ransomware behavior for educational purposes to demonstrate Docker
+                        containerization and CI/CD pipeline concepts. It encrypts and decrypts files within this
+                        controlled environment only.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentFilePath = null;
+        let isEncrypted = false;
+        let originalContent = null;
+
+        const terminal = document.getElementById('terminal');
+
+        function logToTerminal(message, type = '') {
+            const line = document.createElement('div');
+            line.textContent = '> ' + message;
+            if (type) {
+                line.classList.add(type);
+            }
+            terminal.appendChild(line);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        document.getElementById('uploadForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const fileInput = document.getElementById('fileUpload');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                logToTerminal('No file selected', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            logToTerminal(`Uploading file: ${file.name}...`);
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        logToTerminal('Error: ' + data.error, 'error');
+                        return;
+                    }
+
+                    logToTerminal(`File ${data.filename} uploaded successfully`, 'success');
+                    currentFilePath = data.path;
+                    originalContent = data.content;
+
+                    document.getElementById('originalContent').textContent = data.content;
+                    document.getElementById('encryptBtn').disabled = false;
+                    document.getElementById('decryptBtn').disabled = true;
+                    isEncrypted = false;
+                })
+                .catch(error => {
+                    logToTerminal('Error: ' + error.message, 'error');
+                });
+        });
+
+        document.getElementById('encryptBtn').addEventListener('click', function () {
+            if (!currentFilePath) {
+                logToTerminal('No file to encrypt', 'error');
+                return;
+            }
+
+            logToTerminal('Starting encryption process...');
+            logToTerminal('Generating encryption key...');
+
+            fetch('/encrypt', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    file_path: currentFilePath
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        logToTerminal('Encryption error: ' + data.error, 'error');
+                        return;
+                    }
+
+                    logToTerminal('File encrypted successfully!', 'success');
+                    logToTerminal('YOUR FILES HAVE BEEN ENCRYPTED!', 'warning');
+
+                    document.getElementById('processedContent').textContent =
+                        data.content.length > 500 ? data.content.substring(0, 500) + '...' : data.content;
+                    document.getElementById('keyContent').textContent = data.key;
+
+                    document.getElementById('encryptBtn').disabled = true;
+                    document.getElementById('decryptBtn').disabled = false;
+                    isEncrypted = true;
+                })
+                .catch(error => {
+                    logToTerminal('Error: ' + error.message, 'error');
+                });
+        });
+
+        document.getElementById('decryptBtn').addEventListener('click', function () {
+            if (!currentFilePath) {
+                logToTerminal('No file to decrypt', 'error');
+                return;
+            }
+
+            if (!isEncrypted) {
+                logToTerminal('File is not encrypted', 'warning');
+                return;
+            }
+
+            logToTerminal('Starting decryption process...');
+            logToTerminal('Using saved key for decryption...');
+
+            fetch('/decrypt', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    file_path: currentFilePath
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        logToTerminal('Decryption error: ' + data.error, 'error');
+                        return;
+                    }
+
+                    logToTerminal('File decrypted successfully!', 'success');
+
+                    document.getElementById('processedContent').textContent = data.content;
+
+                    document.getElementById('encryptBtn').disabled = false;
+                    document.getElementById('decryptBtn').disabled = true;
+                    isEncrypted = false;
+                })
+                .catch(error => {
+                    logToTerminal('Error: ' + error.message, 'error');
+                });
+        });
+    </script>
+</body>
+
+</html>
